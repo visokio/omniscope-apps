@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Omniscope Data Viewer</title>
+  <style>
+    :root {
+      --bg: #f9fafc;
+      --card: #fff;
+      --border: #ddd;
+      --muted: #666;
+    }
+    body { margin: 0; padding: 20px; background: var(--bg); font-family: Arial, sans-serif; }
+    h1 { margin: 0 0 16px; color: #333; }
+
+    .input-row { display: flex; gap: 10px; align-items: center; margin-bottom: 14px; }
+    input[type="text"] { flex: 1; padding: 8px; font-size: 14px; }
+    button { padding: 8px 12px; font-size: 14px; cursor: pointer; }
+
+    #status { font-size: 13px; color: var(--muted); margin-bottom: 14px; }
+
+    .main { display: grid; grid-template-columns: 1fr 280px; gap: 16px; align-items: start; }
+
+    .card {
+      background: var(--card); border: 1px solid var(--border); border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,.05);
+    }
+    .card h3 { margin: 0; padding: 10px; border-bottom: 1px solid var(--border); font-size: 16px; }
+    .card .content { padding: 10px; }
+
+    /* Table */
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th, td { border: 1px solid var(--border); padding: 6px 8px; text-align: left; }
+    th { background: #f3f4f6; }
+    #pagination { margin-top: 10px; display: flex; justify-content: space-between; align-items: center; }
+    #pagination .right button { margin-left: 6px; }
+
+    /* Filters */
+    .filters .group { margin-bottom: 12px; }
+    .filters .values { max-height: 160px; overflow: auto; border: 1px solid #eee; border-radius: 4px; background: #fafafa; padding: 6px; }
+    .filters label.option { display: flex; gap: 6px; align-items: center; }
+    .full { width: 100%; }
+  </style>
+</head>
+<body>
+  <h1>Omniscope Data Viewer</h1>
+
+  <div class="input-row">
+    <input id="endpoint" type="text" placeholder="Enter Omniscope REST endpoint (e.g. /Public/.../api/v1 or full https://...)" />
+    <button id="loadBtn">OK</button>
+  </div>
+
+  <div id="status">Enter an endpoint and click OK to load data.</div>
+
+  <div class="main">
+    <!-- Left: Table -->
+    <div class="card">
+      <h3>Data Table</h3>
+      <div class="content">
+        <div id="tableContainer"></div>
+        <div id="pagination">
+          <div class="left">
+            <span id="pageInfo"></span>
+          </div>
+          <div class="right">
+            <button id="prevPageBtn">Prev</button>
+            <button id="nextPageBtn">Next</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right: Filters -->
+    <div class="card filters">
+      <h3>Filters</h3>
+      <div class="content">
+        <div class="group">
+          <label for="fieldSelect">Choose up to 5 fields:</label><br/>
+          <select id="fieldSelect" multiple size="7" class="full"></select>
+          <button id="showFieldsBtn" class="full" style="margin-top:8px;">Show fields</button>
+        </div>
+
+        <div id="filterPanels" class="group"></div>
+
+        <button id="applyFiltersBtn" class="full">Apply filters</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="/script.js"></script>
+</body>
+</html>
