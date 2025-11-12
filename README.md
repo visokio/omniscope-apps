@@ -11,3 +11,7 @@ A family of REST, JavaScript, Python and R APIs lets you:
 - Build your own custom data routine or visual components and mini-apps inside Omniscope
 
 All APIs are documented and can be explored here: https://public.omniscope.me/_global_/api/
+
+### Projects
+
+- [`omniscope-workflow-mcp`](./omniscope-workflow-mcp) – A TypeScript MCP server that wraps the Omniscope Workflow REST API and exposes workflow execution and parameter management tools to OpenAI-compliant agents.
