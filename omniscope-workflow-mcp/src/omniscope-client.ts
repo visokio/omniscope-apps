@@ -60,14 +60,19 @@ export class OmniscopeClient {
   }
 
   private async request<T>(url: string, init: RequestInit = {}): Promise<T> {
-    const headers: Record<string, string> = {
-      Accept: 'application/json',
-      ...this.createHeaders(),
-      ...(init.headers as Record<string, string> | undefined),
-    };
+    const headers = new Headers(init.headers ?? undefined);
+    headers.set('Accept', 'application/json');
 
-    if (init.body !== undefined && init.body !== null && headers['Content-Type'] === undefined) {
-      headers['Content-Type'] = 'application/json';
+    const authHeaders = this.createHeaders();
+    if (authHeaders) {
+      const normalizedAuthHeaders = new Headers(authHeaders);
+      normalizedAuthHeaders.forEach((value, key) => {
+        headers.set(key, value);
+      });
+    }
+
+    if (init.body !== undefined && init.body !== null && !headers.has('Content-Type')) {
+      headers.set('Content-Type', 'application/json');
     }
 
     const controller = new AbortController();
