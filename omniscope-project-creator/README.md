@@ -229,32 +229,5 @@ To test:
   - HTTPS recommended  
   - Logging and monitoring  
 
----
 
-# 📚 Possible Enhancements
 
-- Template dropdown  
-- Support multiple parameters  
-- Display API logs in UI  
-- File size validation  
-- Upload history  
-- Authentication integration  
-
----
-
-# 🤝 Contributing
-
-PRs and suggestions are welcome!
-
----
-
-# 📄 License
-
-MIT License
-
----
-
-# 🖼 Additional Screenshots
-
-*(Insert screenshot of project creation success message here)*  
-`![Project created](images/project-created.png)`
