@@ -1,0 +1,8 @@
+{
+  "projectApiBaseUrl": "http://127.0.0.1:24679/SomeProject/_api_/v1/",
+  "uploadRootPath": "C:\\path\\to\\your\\omniscope-server\\files\\SomeProject",
+  "templateId": "Import data file",
+  "fileParamName": "File source",
+  "isEmbedded": true,
+  "omniscopeBaseUrl": "http://127.0.0.1:24679"
+}
