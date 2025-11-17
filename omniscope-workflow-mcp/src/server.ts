@@ -1,171 +1,99 @@
+/**
+ * Entry point for the Omniscope Workflow MCP server.
+ *  - Redirects console output into ./logs for later inspection.
+ *  - Hosts the Streamable HTTP transport under /mcp with optional Basic auth.
+ *  - Manages per-session McpServer instances so multiple MCP sessions can run concurrently.
+ */
 import "dotenv/config";
-import express from 'express';
-import { randomUUID } from 'node:crypto';
-import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
-import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
-import { isInitializeRequest } from '@modelcontextprotocol/sdk/types.js';
-import { z } from 'zod';
+import fs from "fs";
+import path from "path";
+import util from "util";
+import express from "express";
+import { randomUUID } from "node:crypto";
+import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
+// import { isInitializeRequest } from "@modelcontextprotocol/sdk/types.js"; // no longer needed
 
-import { loadConfig } from './config.js';
-import {
-  createClient,
-  ExecuteWorkflowArgs,
-  LambdaExecuteWorkflowArgs,
-  UpdateParametersArgs,
-  GetParametersArgs,
-} from './omniscope-client.js';
+import { registerWorkflowTools } from "./apis/workflow/workflow-tools.js";
 
-const config = loadConfig();
+// ---------- Global Logging Redirect ----------
 
-const executeWorkflowSchema = z.object({
-  projectPath: z.string(),
-  blocks: z.array(z.string()).optional(),
-  refreshFromSource: z.boolean().optional(),
-  cancelExisting: z.boolean().optional(),
-  baseUrl: z.string().url().optional(),
-  dryRun: z.boolean().optional(),
+// Create logs folder if missing
+const logsDir = path.join(process.cwd(), "logs");
+if (!fs.existsSync(logsDir)) {
+  fs.mkdirSync(logsDir);
+}
+
+// Create log streams (append mode)
+const outStream = fs.createWriteStream(path.join(logsDir, "stdout.log"), {
+  flags: "a",
+});
+const errStream = fs.createWriteStream(path.join(logsDir, "stderr.log"), {
+  flags: "a",
 });
 
-const lambdaExecuteWorkflowSchema = executeWorkflowSchema.extend({
-  params: z.record(z.any()).optional(),
-  deleteExecutionOnFinish: z.boolean().optional(),
-});
+// Keep original console methods
+const origLog = console.log;
+const origError = console.error;
+const origWarn = console.warn;
 
-const getJobStateSchema = z.object({
-  projectPath: z.string(),
-  jobId: z.string(),
-  baseUrl: z.string().url().optional(),
-});
+function formatArg(a: unknown): string {
+  if (typeof a === "string") return a;
+  try {
+    return JSON.stringify(a);
+  } catch {
+    return util.inspect(a, { depth: 4 });
+  }
+}
 
-const getParametersSchema = z.object({
-  projectPath: z.string(),
-  parameterName: z.string().optional(),
-  baseUrl: z.string().url().optional(),
-});
-
-const updateParametersSchema = z.object({
-  projectPath: z.string(),
-  updates: z
-    .array(
-      z.object({
-        name: z.string(),
-        value: z.any(),
-      }),
-    )
-    .min(1),
-  baseUrl: z.string().url().optional(),
-  dryRun: z.boolean().optional(),
-});
-
-type ExecuteWorkflowInput = z.infer<typeof executeWorkflowSchema>;
-type LambdaExecuteWorkflowInput = z.infer<typeof lambdaExecuteWorkflowSchema>;
-type GetJobStateInput = z.infer<typeof getJobStateSchema>;
-type GetParametersInput = z.infer<typeof getParametersSchema>;
-type UpdateParametersInput = z.infer<typeof updateParametersSchema>;
-
-const toJsonResult = (payload: unknown) => ({
-  content: [
-    {
-      type: 'text' as const,
-      text: typeof payload === 'string' ? payload : JSON.stringify(payload, null, 2),
-    },
-  ],
-});
-
-const registerWorkflowTools = (server: McpServer) => {
-  server.registerTool(
-    'execute_workflow',
-    {
-      title: 'Execute workflow',
-      description: 'Execute an Omniscope workflow project and return the job identifier.',
-      inputSchema: executeWorkflowSchema.shape,
-    },
-    async (args: ExecuteWorkflowInput) => {
-      const client = createClient(config, args.baseUrl);
-      const { baseUrl, ...rest } = args;
-      const workflowArgs: ExecuteWorkflowArgs = { ...rest };
-      const response = await client.executeWorkflow(workflowArgs);
-      return toJsonResult(response);
-    },
-  );
-
-  server.registerTool(
-    'lambda_execute_workflow',
-    {
-      title: 'Lambda execute workflow',
-      description: 'Execute an Omniscope workflow as a lambda copy with optional parameters.',
-      inputSchema: lambdaExecuteWorkflowSchema.shape,
-    },
-    async (args: LambdaExecuteWorkflowInput) => {
-      const client = createClient(config, args.baseUrl);
-      const { baseUrl, ...rest } = args;
-      const lambdaArgs: LambdaExecuteWorkflowArgs = { ...rest };
-      const response = await client.lambdaExecuteWorkflow(lambdaArgs);
-      return toJsonResult(response);
-    },
-  );
-
-  server.registerTool(
-    'get_job_state',
-    {
-      title: 'Get job state',
-      description: 'Retrieve the state of a workflow job using its identifier.',
-      inputSchema: getJobStateSchema.shape,
-    },
-    async (args: GetJobStateInput) => {
-      const client = createClient(config, args.baseUrl);
-      const response = await client.getJobState(args.projectPath, args.jobId);
-      return toJsonResult(response);
-    },
-  );
-
-  server.registerTool(
-    'get_parameters',
-    {
-      title: 'Get parameters',
-      description: 'Fetch project parameters from an Omniscope workflow project.',
-      inputSchema: getParametersSchema.shape,
-    },
-    async (args: GetParametersInput) => {
-      const client = createClient(config, args.baseUrl);
-      const { baseUrl, ...rest } = args;
-      const parameterArgs: GetParametersArgs = { ...rest };
-      const response = await client.getParameters(parameterArgs);
-      return toJsonResult(response);
-    },
-  );
-
-  server.registerTool(
-    'update_parameters',
-    {
-      title: 'Update parameters',
-      description: 'Update project parameters in an Omniscope workflow project.',
-      inputSchema: updateParametersSchema.shape,
-    },
-    async (args: UpdateParametersInput) => {
-      const client = createClient(config, args.baseUrl);
-      const { baseUrl, ...rest } = args;
-      const updateArgs: UpdateParametersArgs = {
-        ...rest,
-        updates: rest.updates.map((entry) => ({
-          name: entry.name,
-          value: entry.value,
-        })),
-      };
-      const response = await client.updateParameters(updateArgs);
-      return toJsonResult(response);
-    },
-  );
+// Redirect console.log → file (+ terminal)
+console.log = (...args: any[]) => {
+  const line = args.map(formatArg).join(" ") + "\n";
+  outStream.write(line);
+  origLog(...args); // remove this if you want logs ONLY in files
 };
 
-const createWorkflowServer = (): McpServer => {
+// Redirect console.error → file (+ terminal)
+console.error = (...args: any[]) => {
+  const line = args.map(formatArg).join(" ") + "\n";
+  errStream.write(line);
+  origError(...args);
+};
+
+// Redirect console.warn → file (+ terminal)
+console.warn = (...args: any[]) => {
+  const line = args.map(formatArg).join(" ") + "\n";
+  outStream.write("[WARN] " + line);
+  origWarn(...args);
+};
+
+// Graceful shutdown: flush log streams
+function shutdown() {
+  outStream.end();
+  errStream.end();
+  process.exit(0);
+}
+
+process.on("SIGINT", shutdown);
+process.on("SIGTERM", shutdown);
+
+// ---------- MCP Server ----------
+
+function createOmniscopeServer(): McpServer {
   const server = new McpServer({
-    name: 'omniscope-workflow-mcp',
-    version: '0.1.0',
+    name: "omniscope-mcp",
+    version: "0.1.0",
   });
+
+  // Register all API tool families here
   registerWorkflowTools(server);
+  // registerSchedulerTools(server);
+  // registerProjectTools(server);
+
   return server;
-};
+}
+
+// ---------- Session handling ----------
 
 type SessionContext = {
   transport: StreamableHTTPServerTransport;
@@ -174,88 +102,86 @@ type SessionContext = {
 
 const sessions = new Map<string, SessionContext>();
 
-const trackSession = (sessionId: string, context: SessionContext) => {
-  sessions.set(sessionId, context);
-};
+async function disposeSession(id?: string) {
+  if (!id) return;
+  const ctx = sessions.get(id);
+  if (!ctx) return;
 
-const disposeSession = async (sessionId?: string) => {
-  if (!sessionId) {
-    return;
-  }
-  const context = sessions.get(sessionId);
-  if (!context) {
-    return;
-  }
-  sessions.delete(sessionId);
-  try {
-    await context.server.close();
-  } catch (error) {
-    console.error(`Failed to close session ${sessionId}:`, error);
-  }
-};
-
-const app = express();
-app.use(
-  express.json({
-    limit: '4mb',
-  }),
-);
-
-const port = Number.parseInt(process.env.PORT ?? '3000', 10);
-if (!Number.isFinite(port)) {
-  throw new Error('Invalid PORT value');
+  sessions.delete(id);
+  await ctx.server.close();
 }
 
-const host = process.env.HOST ?? '0.0.0.0';
-const healthProjectPath = process.env.OMNI_HEALTHCHECK_PROJECT_PATH;
+// ---------- HTTP server ----------
 
-app.get('/healthz', async (_req, res) => {
-  if (!healthProjectPath) {
-    res.json({ status: 'ok', message: 'No health check project configured' });
-    return;
+const app = express();
+app.use(express.json({ limit: "4mb" }));
+
+const USER = process.env.MCP_BASIC_USER;
+const PASS = process.env.MCP_BASIC_PASS;
+
+/**
+ * Basic auth for /mcp only.
+ *
+ * Behaviour:
+ *  - If MCP_BASIC_USER and MCP_BASIC_PASS are set:
+ *      -> Protect /mcp with HTTP Basic Auth.
+ *  - If they are NOT set:
+ *      -> Do NOT require auth (useful for ChatGPT MCP testing).
+ */
+app.use((req, res, next) => {
+  // Only care about /mcp traffic
+  if (!req.path.startsWith("/mcp")) return next();
+
+  // If no credentials configured, leave /mcp open (for ChatGPT / dev)
+  if (!USER || !PASS) {
+    return next();
   }
 
-  try {
-    const client = createClient(config);
-    await client.getParameters({ projectPath: healthProjectPath });
-    res.json({ status: 'ok' });
-  } catch (error) {
-    res.status(500).json({ status: 'error', message: (error as Error).message });
+  const h = req.header("authorization");
+  if (!h || !h.startsWith("Basic ")) {
+    res.set("WWW-Authenticate", 'Basic realm="Omniscope MCP"');
+    return res.status(401).json({ error: "Unauthorized" });
   }
+
+  const decoded = Buffer.from(h.substring(6), "base64").toString();
+  const [u, p] = decoded.split(":");
+
+  if (u !== USER || p !== PASS) {
+    return res.status(401).json({ error: "Invalid credentials" });
+  }
+
+  next();
 });
 
-const unknownSessionResponse = {
-  jsonrpc: '2.0',
-  error: {
-    code: -32004,
-    message: 'Unknown MCP session. Start a new session with an initialization request.',
-  },
-  id: null,
-};
+// MCP endpoint
+app.all("/mcp", async (req, res) => {
+  console.log("=== Incoming MCP Request ===");
+  console.log("Method:", req.method);
+  console.log("Body.method:", (req.body as any)?.method);
+  console.log("Headers:", req.headers);
+  console.log("Body:", req.body);
+  console.log("============================");
 
-const invalidRequestResponse = {
-  jsonrpc: '2.0',
-  error: {
-    code: -32000,
-    message: 'Bad Request: No valid session ID provided',
-  },
-  id: null,
-};
-
-app.all('/mcp', async (req, res) => {
   try {
-    const sessionId = req.header('mcp-session-id') ?? undefined;
-    let session = sessionId ? sessions.get(sessionId) : undefined;
+    const id = req.header("mcp-session-id");
+    let session = id ? sessions.get(id) : undefined;
 
-    if (!session && req.method === 'POST' && isInitializeRequest(req.body)) {
-      const server = createWorkflowServer();
+    const isInit =
+      req.method === "POST" &&
+      req.body &&
+      typeof (req.body as any).method === "string" &&
+      (req.body as any).method === "initialize";
+
+    // New session on initialize
+    if (!session && isInit) {
+      const server = createOmniscopeServer();
       const transport = new StreamableHTTPServerTransport({
         sessionIdGenerator: () => randomUUID(),
-        onsessioninitialized: (newSessionId) => {
-          trackSession(newSessionId, { server, transport });
+        onsessioninitialized: (newId) => {
+          sessions.set(newId, { server, transport });
         },
-        onsessionclosed: (closedSessionId) => {
-          void disposeSession(closedSessionId);
+        onsessionclosed: (closedId) => {
+          void disposeSession(closedId);
         },
       });
 
@@ -265,40 +191,30 @@ app.all('/mcp', async (req, res) => {
 
       await server.connect(transport);
       session = { server, transport };
-    } else if (!session && sessionId) {
-      res.status(404).json(unknownSessionResponse);
-      return;
-    } else if (!session) {
-      res.status(400).json(invalidRequestResponse);
-      return;
     }
 
-    await session.transport.handleRequest(req, res, req.body);
-  } catch (error) {
-    console.error('Failed to handle MCP request:', error);
-    if (!res.headersSent) {
-      res.status(500).json({
-        jsonrpc: '2.0',
-        error: {
-          code: -32603,
-          message: 'Internal server error',
-        },
+    // No valid session yet
+    if (!session) {
+      return res.status(400).json({
+        jsonrpc: "2.0",
+        error: { code: -32000, message: "No valid session" },
         id: null,
       });
     }
+
+    await session.transport.handleRequest(req, res, req.body);
+  } catch (err) {
+    console.error("Error handling /mcp request:", err);
+    return res.status(500).json({
+      jsonrpc: "2.0",
+      error: { code: -32603, message: "Internal server error" },
+      id: null,
+    });
   }
 });
 
-async function main() {
-  await new Promise<void>((resolve) => {
-    app.listen(port, host, () => {
-      console.log(`Omniscope Workflow MCP server listening on http://${host}:${port}`);
-      resolve();
-    });
-  });
-}
-
-void main().catch((error) => {
-  console.error('Failed to start Omniscope Workflow MCP server:', error);
-  process.exitCode = 1;
+// Start HTTP server
+const port = Number(process.env.PORT ?? 3000);
+app.listen(port, "0.0.0.0", () => {
+  console.log(`Omniscope MCP listening on ${port}`);
 });

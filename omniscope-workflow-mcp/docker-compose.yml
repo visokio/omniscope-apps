@@ -1,0 +1,37 @@
+version: "3.8"
+
+services:
+  mcp-server:
+    image: omniscope-mcp:latest
+    container_name: omniscope-mcp
+    restart: unless-stopped
+
+    env_file:
+      - .env
+
+    # Only expose inside the Docker network, not on the host
+    expose:
+      - "3000"
+    
+    volumes:
+      - ./logs:/app/logs   # <— new
+
+
+  nginx:
+    image: nginx:1.27
+    container_name: nginx-mcp-proxy
+    restart: unless-stopped
+
+    depends_on:
+      - mcp-server
+
+    # External HTTPS listener on port 3000
+    ports:
+      - "3000:3000"
+
+    volumes:
+      # Our custom nginx config
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+
+      # Mount ALL Let's Encrypt data from host (read-only)
+      - /etc/letsencrypt:/etc/letsencrypt:ro

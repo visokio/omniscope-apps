@@ -1,175 +1,252 @@
 # Omniscope Workflow MCP Server
 
-A Model Context Protocol (MCP) server that surfaces the Omniscope Workflow REST API as MCP tools. The server is designed to run alongside Omniscope or as a standalone, configurable service that can be registered with OpenAI MCP-compatible clients (e.g. ChatGPT connectors).
+MCP (Model Context Protocol) server that exposes the **Omniscope Workflow REST API** as a set of MCP tools.  
+Run it locally, inside Docker, or via `docker compose` and connect it to ChatGPT MCP connectors, curl, or Insomnia.
 
-## Features
+---
 
-- Execute Omniscope workflows and lambda executions.
-- Poll workflow job state.
-- Read and update project parameters.
-- Configurable base URLs and project allow-lists to keep execution scoped.
-- Optional health check endpoint that validates connectivity to a specific project.
+## What You Get
+
+- ✅ Execute Omniscope workflows (standard + lambda copies)
+- ✅ Poll workflow job state
+- ✅ Read and update project parameters
+- ✅ Restrict access to specific project path prefixes
+- ✅ Optional HTTP basic auth guard around the `/mcp` endpoint
+- ✅ File-based logging (`logs/stdout.log`, `logs/stderr.log`) for auditing requests
+
+All tools are registered under the MCP namespace `workflow_*` (see below).
+
+---
 
 ## Requirements
 
-- Node.js 18 or later.
-- Access to the Omniscope Workflow REST API.
-- Network access to install npm dependencies, including `@modelcontextprotocol/sdk`.
+- **Node.js** v18+ (for local runs)
+- **npm** (ships with Node)
+- Access to an Omniscope instance that exposes the Workflow REST API
+- Ability to reach that Omniscope instance from wherever the MCP server runs
+- Docker / Docker Compose (optional, for containerized runs)
 
-## Getting started
+---
 
-1. Install dependencies:
+## Environment Variables
 
-   ```bash
-   npm install
-   ```
+Create a `.env` file in the project root. Only the variables below are used by the codebase.
 
-2. Copy the environment template and update the values:
+| Variable | Required | Default | Purpose |
+| --- | --- | --- | --- |
+| `OMNI_BASE_URL` | ✅ | — | Base URL of your Omniscope instance, e.g. `https://demo.omniscope.me`. |
+| `OMNI_BASIC_USERNAME` | ⚠️ (one of username/password pair) | — | Username for Omniscope basic auth. Leave both username & password empty if authentication is not required. |
+| `OMNI_BASIC_PASSWORD` | ⚠️ | — | Password for Omniscope basic auth. |
+| `OMNI_ALLOWED_PROJECT_PREFIXES` | ❌ | (empty) | Comma-separated prefixes (`/_global_,/mcptest`). Requests must target one of these prefixes when set. |
+| `OMNI_TIMEOUT_MS` | ❌ | `15000` | Timeout for outbound HTTP requests to Omniscope. |
+| `PORT` | ❌ | `3000` | Port where the MCP HTTP server listens. |
+| `MCP_BASIC_USER` / `MCP_BASIC_PASS` | ❌ | (unset) | Enable HTTP Basic Auth for `/mcp` if both are set. |
+| `MCP_LOG_TOOLS` | ❌ | `true` | Set to `false` to mute per-tool console logging. |
 
-   ```bash
-   cp .env.example .env
-   ```
+> There is no `.env.example` in the repo, so create `.env` manually using the table above.
 
-3. Build the TypeScript sources:
+Minimal `.env` example:
 
+```dotenv
+OMNI_BASE_URL=https://demo.omniscope.me
+OMNI_BASIC_USERNAME=workflow-user
+OMNI_BASIC_PASSWORD=workflow-pass
+PORT=3000
+```
+
+---
+
+## Available MCP Tools
+
+| Tool name | Description | Key arguments |
+| --- | --- | --- |
+| `workflow_execute` | Runs an Omniscope workflow and returns `jobId`. | `project_path` (string), optional `blocks`, `refresh_from_source`, `cancel_existing`, `dry_run`. |
+| `workflow_execute_lambda` | Executes a lambda copy of a workflow. | Same as above plus optional `params`, `delete_execution_on_finish`. |
+| `workflow_get_job_state` | Polls workflow run status. | `project_path`, `job_id`. |
+| `workflow_get_parameters` | Reads project parameters. | `project_path`, optional `parameter_name`. |
+| `workflow_update_parameters` | Updates one or more parameters. | `project_path`, `updates[{ name, value }]`, optional `dry_run`. |
+
+These map to Omniscope REST endpoints via `src/apis/workflow/workflow-client.ts`.
+
+---
+
+## Running Locally (Node.js)
+
+```bash
+git clone <repo-url> omniscope-workflow-mcp
+cd omniscope-workflow-mcp
+npm install
+```
+
+1. **Configure environment**  
+   Create `.env` (see table above).
+
+2. **Build TypeScript → dist/**  
    ```bash
    npm run build
    ```
 
-4. Start the server:
-
+3. **Start the server**  
    ```bash
    npm start
    ```
+   Expected log: `Omniscope MCP listening on 3000`. The MCP endpoint lives at `http://localhost:3000/mcp`.
 
-   The MCP endpoint is exposed at `http://localhost:3000/mcp` by default. Use the `PORT` environment variable to change the port.
-
-### Run with Docker
-
-1. Build the container image:
-
+4. **(Optional) Dev/watch mode**  
    ```bash
-   docker build -t omniscope-workflow-mcp .
+   npm run dev
    ```
+   Uses `tsx` to watch `src/server.ts`.
 
-2. Create a `.env` file (or reuse the provided `.env.example`) containing at minimum `OMNI_BASE_URL` and any required authentication variables.
+Logs are always written to the local `logs/` folder (`stdout.log`, `stderr.log`). Keep the folder ignored in git (already configured).
 
-3. Run the container, mounting the environment file:
+---
 
-   ```bash
-   docker run --env-file .env -p 3000:3000 omniscope-workflow-mcp
-   ```
+## Running with Docker
 
-   The server listens on port 3000 by default. Adjust the `PORT` variable in your environment file to expose a different port.
-
-Docker uses the same environment variables as the local Node.js process, so the container can reach any accessible Omniscope instance over HTTPS as long as the host network has connectivity.
-
-## Environment variables
-
-| Variable | Description | Required | Default |
-| --- | --- | --- | --- |
-| `OMNI_BASE_URL` | Base URL of the Omniscope instance (e.g. `https://public.omniscope.me`). | ✅ | — |
-| `OMNI_ALLOW_BASE_URLS` | Optional comma-separated list of extra base URLs that tool callers are allowed to request. The default base URL is always allowed. | ❌ | — |
-| `OMNI_ALLOWED_PROJECT_PREFIXES` | Optional comma-separated list of project path prefixes (e.g. `/_global_`). Requests must target a project within one of these prefixes when set. | ❌ | — |
-| `OMNI_BASIC_USERNAME` / `OMNI_BASIC_PASSWORD` | Basic auth credentials for Omniscope. Provide these or `OMNI_BEARER_TOKEN` if the API is protected. | ❌ | — |
-| `OMNI_BEARER_TOKEN` | Bearer token for Omniscope API authentication. | ❌ | — |
-| `OMNI_TIMEOUT_MS` | Timeout for outbound HTTP requests to Omniscope in milliseconds. | ❌ | `30000` |
-| `OMNI_HEALTHCHECK_PROJECT_PATH` | Optional project path used by the `/healthz` endpoint to verify connectivity. | ❌ | — |
-| `PORT` | Port to listen on. | ❌ | `3000` |
-
-## Available tools
-
-| Tool | Description | Arguments |
-| --- | --- | --- |
-| `execute_workflow` | Runs a workflow in-place and returns a job ID. | `projectPath` (string), optional `blocks` (string[]), `refreshFromSource` (boolean), `cancelExisting` (boolean), `dryRun` (boolean), `baseUrl` (string; must be in the allow list). |
-| `lambda_execute_workflow` | Executes a workflow as a temporary lambda copy. | Same as `execute_workflow`, plus optional `params` (object) and `deleteExecutionOnFinish` (boolean). |
-| `get_job_state` | Retrieves the state of a workflow job. | `projectPath` (string), `jobId` (string), optional `baseUrl` (string). |
-| `get_parameters` | Returns project parameters, optionally filtered by name. | `projectPath` (string), optional `parameterName` (string) and `baseUrl` (string). |
-| `update_parameters` | Updates one or more project parameters. | `projectPath` (string), `updates` (array of `{ name, value }`), optional `dryRun` (boolean) and `baseUrl` (string). |
-
-### Dry-run support
-
-Mutating tools accept a `dryRun` flag. When set to `true` the server validates the request and reports what would happen without calling the Omniscope API.
-
-## Health check
-
-An optional `/healthz` HTTP endpoint is provided. When `OMNI_HEALTHCHECK_PROJECT_PATH` is set, the server attempts to fetch parameters from that project to verify Omniscope connectivity. Without the variable the endpoint simply returns a static success payload.
-
-### Manual testing and workflow execution
-
-The MCP endpoint implements the [JSON-RPC over HTTP transport](https://modelcontextprotocol.io/). You can exercise the server manually with `curl` by starting a session, invoking a tool, and closing the session:
+### 1. Build an image (must be done before any Docker/Compose run)
 
 ```bash
-# 1. Initialise an MCP session
-curl -sS \
-  -H 'Content-Type: application/json' \
+docker build -t omniscope-mcp:latest .
+```
+
+### 2. Run the container directly
+
+```bash
+docker run --env-file .env -p 3000:3000 omniscope-mcp:latest
+```
+
+The server still writes to `/app/logs`. Mount a host volume if you want the log files persisted:
+
+```bash
+docker run --env-file .env -p 3000:3000 -v "$(pwd)/logs:/app/logs" omniscope-mcp:latest
+```
+
+---
+
+## Running with Docker Compose
+
+`docker-compose.yml` spins up the MCP server plus an nginx proxy that terminates TLS and forwards requests.
+
+1. **Build the server image (Compose expects `omniscope-mcp:latest`):**
+
+   ```bash
+   docker build -t omniscope-mcp:latest .
+   ```
+
+2. **Bring up the stack:**
+
+   ```bash
+   docker compose up -d
+   ```
+
+   - `mcp-server`: runs the Node service, exposes port 3000 internally, mounts `./logs` → `/app/logs`.
+   - `nginx`: listens on host port 3000, proxies to `mcp-server`, and mounts `nginx.conf` plus local `/etc/letsencrypt` certs.
+
+3. **Check logs:**
+
+   ```bash
+   docker compose logs -f mcp-server
+   docker compose logs -f nginx
+   ```
+
+4. **Shut everything down:**
+
+   ```bash
+   docker compose down
+   ```
+
+Update the compose file if you push tagged images to a registry; by default it expects the locally built `omniscope-mcp:latest`.
+
+---
+
+## Manual Testing with `curl`
+
+### 1. Initialize a session
+
+```bash
+curl -i \
+  -H "Content-Type: application/json" \
   -d '{
         "jsonrpc": "2.0",
         "id": 1,
         "method": "initialize",
         "params": {
-          "clientInfo": { "name": "manual-test", "version": "0.0.1" },
-          "protocolVersion": "1.0"
+          "protocolVersion": "2025-03-26",
+          "capabilities": {
+            "tools": {},
+            "resources": {},
+            "prompts": {}
+          },
+          "clientInfo": {
+            "name": "curl-client",
+            "version": "1.0.0"
+          }
         }
       }' \
-  http://localhost:3000/mcp -D headers.txt > init.json
+  http://localhost:3000/mcp
+```
 
-# 2. Capture the session ID from the response headers
-SESSION_ID=$(grep -i 'mcp-session-id:' headers.txt | awk '{print $2}' | tr -d '\r')
+Copy the `mcp-session-id` header from the response. If you configured `MCP_BASIC_USER/PASS`, add `-u "user:pass"` to each call.
 
-# 3. Execute a workflow tool call
-curl -sS \
-  -H "mcp-session-id: ${SESSION_ID}" \
-  -H 'Content-Type: application/json' \
+### 2. Execute a workflow
+
+```bash
+curl -i \
+  -H "Content-Type: application/json" \
+  -H "mcp-session-id: <SESSION_ID>" \
   -d '{
         "jsonrpc": "2.0",
         "id": 2,
         "method": "tools/call",
         "params": {
-          "name": "execute_workflow",
+          "name": "workflow_execute",
           "arguments": {
-            "projectPath": "/_global_/MyWorkflow"
+            "project_path": "/mcptest/Project.iox"
           }
         }
       }' \
   http://localhost:3000/mcp
-
 ```
 
-Replace `/_global_/MyWorkflow` with the project path of the workflow you want to run. The server will use the Omniscope base URL and credentials specified in your environment variables, regardless of whether it is running on your host machine or inside Docker. Sessions are cleaned up automatically when the client stops sending requests or closes the underlying connection.
+### 3. Poll job state
 
-## Docker image
-
-This repository includes a multi-stage Dockerfile ready for production use:
-
-```dockerfile
-# syntax=docker/dockerfile:1
-
-FROM node:18-alpine AS deps
-WORKDIR /app
-COPY package*.json ./
-RUN npm ci
-
-FROM node:18-alpine AS build
-WORKDIR /app
-COPY --from=deps /app/node_modules ./node_modules
-COPY package*.json ./
-COPY tsconfig.json ./
-COPY src ./src
-RUN npm run build
-
-FROM node:18-alpine
-ENV NODE_ENV=production
-WORKDIR /app
-COPY --from=deps /app/node_modules ./node_modules
-COPY --from=build /app/dist ./dist
-COPY package*.json ./
-EXPOSE 3000
-CMD ["node", "dist/server.js"]
+```bash
+curl -i \
+  -H "Content-Type: application/json" \
+  -H "mcp-session-id: <SESSION_ID>" \
+  -d '{
+        "jsonrpc": "2.0",
+        "id": 3,
+        "method": "tools/call",
+        "params": {
+          "name": "workflow_get_job_state",
+          "arguments": {
+            "project_path": "/mcptest/Project.iox",
+            "job_id": "<JOB_ID>"
+          }
+        }
+      }' \
+  http://localhost:3000/mcp
 ```
 
-## Development tips
+Replace `project_path` and `job_id` with real values. Similar payloads apply to `workflow_get_parameters` and `workflow_update_parameters`.
 
-- Use `npm run dev` for a TypeScript-aware development server (requires `ts-node`).
-- Enable verbose logging by wrapping the server start command with `DEBUG=mcp:* npm start` (the MCP SDK uses the `debug` package).
-- Combine this server with ChatGPT Connectors by registering the MCP endpoint URL in your OpenAI settings.
+---
+
+## Logging & Troubleshooting
+
+- Console output is mirrored to `logs/stdout.log` and `logs/stderr.log`. Inspect these when debugging requests from Insomnia or ChatGPT.
+- Enable detailed tool logs with the default `MCP_LOG_TOOLS=true`. Set it to `false` to reduce noise.
+- If Omniscope rejects requests, check credentials and project prefixes: `validateProjectPath` enforces `OMNI_ALLOWED_PROJECT_PREFIXES`.
+- Timeout errors respect `OMNI_TIMEOUT_MS`.
+
+---
+
+## Contributing / Development Notes
+
+- Source lives under `src/` with TypeScript strict mode (see `tsconfig.json`).
+- Build artifacts go to `dist/`; do not check them in.
+- The server currently only registers workflow-related tools. Additional APIs can hook into `registerWorkflowTools` in `src/server.ts`.
+
+You now have a complete MCP server that mirrors Omniscope workflows to AI agents and manual clients alike.
