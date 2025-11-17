@@ -15,3 +15,4 @@ All APIs are documented and can be explored here: https://public.omniscope.me/_g
 ### Projects
 
 - [`omniscope-workflow-mcp`](./omniscope-workflow-mcp) – A TypeScript MCP server that wraps the Omniscope Workflow REST API and exposes workflow execution and parameter management tools to OpenAI-compliant agents.
+- [`omniscope-project-creator`](./omniscope-project-creator) – A lightweight demonstration application showing how to build Omniscope EVO projects dynamically using the Project API, including file upload, embedding, and automatic project creation.
