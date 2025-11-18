@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Omniscope Scheduler Task Runner</title>
+  <style>
+    body { font-family: sans-serif; padding: 20px; }
+    #result { white-space: pre-wrap; margin-top: 1rem; padding: 10px; background: #f5f5f5; border-radius: 6px; }
+    input[type="text"] { padding: 6px; width: 320px; }
+    button { padding: 6px 12px; margin-left: 8px; }
+    .section { margin-bottom: 20px; }
+  </style>
+</head>
+<body>
+
+  <h1>Omniscope Scheduler Task Runner</h1>
+
+  <div class="section">
+    <h2>Test Scheduler API</h2>
+    <button id="get-jobs-btn">Get Jobs</button>
+  </div>
+
+  <div class="section">
+    <h2>Execute a Task</h2>
+    <label>
+      Task name:
+      <input id="task-name" type="text" placeholder="My Scheduled Task" />
+    </label>
+    <button id="execute-task-btn">Execute Task</button>
+    <button id="cancel-job-btn" disabled>Cancel Current Job</button>
+  </div>
+
+  <div class="section">
+    <h2>Output</h2>
+    <div id="result"></div>
+  </div>
+
+  <script type="module" src="/script.js"></script>
+</body>
+
+</html>
