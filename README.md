@@ -17,4 +17,5 @@ All APIs are documented and can be explored here: https://public.omniscope.me/_g
 - [`omniscope-workflow-mcp`](./omniscope-workflow-mcp) – A TypeScript MCP server that wraps the **Omniscope Workflow REST API** and exposes workflow execution and parameter management tools to OpenAI-compliant agents.
 - [`omniscope-project-creator`](./omniscope-project-creator) – A lightweight demonstration application showing how to build projects dynamically using the **Omniscope Project REST API**, including file upload, embedding, and automatic project creation.
 - [`simple-table-with-filters`](./simple-table-with-filters) – A self contained example that showing how to create an application using the **Omniscope Query REST API**. A webpage that queries and renders a data table on the left with a filter panel on the right.
+- [`omniscope-scheduler-task-runner`](./omniscope-scheduler-task-runner) – A lightweight demonstration application showing how to execute and monitor Scheduler tasks using the **Omniscope Scheduler REST API**, including live job status polling and job cancellation.
 
