@@ -20,4 +20,5 @@ All APIs are documented and can be explored here: https://public.omniscope.me/_g
 - [`omniscope-scheduler-task-runner`](./omniscope-scheduler-task-runner) – A lightweight demonstration application showing how to execute and monitor Scheduler tasks using the **Omniscope Scheduler REST API**, including live job status polling and job cancellation.
 - [`omniscope-workflow-runner`](./omniscope-workflow-runner) – An application showing how to load and update project parameters, execute workflows, and monitor live job status using the **Omniscope Workflow REST API**.
 - [`omniscope-lambda-workflow-runner`](./omniscope-lambda-workflow-runner) – An application showing how to trigger ad-hoc lambda workflow executions using the **Omniscope Workflow REST API**, including parameter updates, selective block execution, and real-time job state polling.
+- [`omniscope-workflow-upload-and-execute`](./omniscope-workflow-upload-and-execute) – A lightweight example application demonstrating how to upload a file to a workflow’s FILE parameter and trigger an ad-hoc lambda execution using the **Omniscope Workflow REST API**, including live job state polling.
 
