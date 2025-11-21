@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Omniscope Workflow Runner</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="/style.css" />
+  </head>
+  <body>
+    <main class="app">
+      <h1>Omniscope Workflow Runner</h1>
+      <p class="subtitle">
+        Simple example to update project parameters and execute a workflow via the Omniscope Workflow REST API.
+      </p>
+
+      <section class="panel">
+        <h2>Project</h2>
+        <label class="field">
+          <span>Project path (relative):</span>
+          <input
+            id="projectPath"
+            type="text"
+            placeholder="e.g. Customer+Satisfaction/Dashboard.iox"
+          />
+        </label>
+        <button id="loadParamsBtn">Load parameters</button>
+      </section>
+
+      <section class="panel">
+        <h2>Parameters</h2>
+        <div id="paramsContainer">
+          <p>No parameters loaded yet.</p>
+        </div>
+        <button id="updateParamsBtn" disabled>Update parameters</button>
+      </section>
+
+      <section class="panel">
+        <h2>Execution</h2>
+        <p class="help-text">
+          Executes the workflow in-place using
+          <code>/execute</code> on the selected project.
+        </p>
+        <button id="executeWorkflowBtn" disabled>Execute workflow</button>
+      </section>
+
+      <section class="panel">
+        <h2>Log / Execution state</h2>
+        <div id="logOutput" class="log-output"></div>
+      </section>
+    </main>
+
+    <script type="module" src="/main.js"></script>
+  </body>
+</html>
