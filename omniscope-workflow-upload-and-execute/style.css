@@ -1,0 +1,257 @@
+:root {
+  --bg: #0f172a;
+  --bg-card: #020617;
+  --bg-card-soft: #02081a;
+  --border-subtle: rgba(148, 163, 184, 0.25);
+  --accent: #38bdf8;
+  --accent-soft: rgba(56, 189, 248, 0.12);
+  --accent-strong: rgba(56, 189, 248, 0.2);
+  --text: #e5e7eb;
+  --text-muted: #9ca3af;
+  --text-soft: #6b7280;
+  --danger: #f97373;
+  --radius-lg: 16px;
+  --shadow-card: 0 18px 45px rgba(15, 23, 42, 0.8);
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    sans-serif;
+  background: radial-gradient(circle at top left, #1e293b 0, #020617 50%, #000 100%);
+  color: var(--text);
+  min-height: 100vh;
+}
+
+body {
+  display: flex;
+  justify-content: center;
+  padding: 24px 16px 40px;
+}
+
+/* Layout */
+
+.app-container {
+  width: 100%;
+  max-width: 960px;
+}
+
+.app-header {
+  margin-bottom: 24px;
+}
+
+.app-header h1 {
+  margin: 0 0 8px;
+  font-size: 1.8rem;
+  letter-spacing: 0.02em;
+}
+
+.app-subtitle {
+  margin: 0;
+  color: var(--text-soft);
+  font-size: 0.95rem;
+}
+
+/* Cards / sections */
+
+.card {
+  background: radial-gradient(circle at top left, #02081a, #020617 40%, #000 100%);
+  border-radius: 20px;
+  padding: 18px 18px 16px;
+  margin-bottom: 16px;
+  border: 1px solid var(--border-subtle);
+  box-shadow: var(--shadow-card);
+}
+
+.section-title {
+  margin: 0 0 12px;
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+/* Form elements */
+
+.form-row {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.form-row label {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+input[type="text"],
+select {
+  border-radius: 999px;
+  border: 1px solid var(--border-subtle);
+  background: rgba(15, 23, 42, 0.75);
+  color: var(--text);
+  padding: 8px 12px;
+  font-size: 0.9rem;
+  outline: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease,
+    background-color 0.15s ease;
+}
+
+input[type="text"]::placeholder {
+  color: #4b5563;
+}
+
+input[type="text"]:focus,
+select:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent-soft);
+  background: rgba(15, 23, 42, 0.95);
+}
+
+select {
+  cursor: pointer;
+}
+
+/* Buttons */
+
+.form-row-actions {
+  margin-top: 4px;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  outline: none;
+  transition: background-color 0.15s ease, border-color 0.15s ease,
+    transform 0.08s ease, box-shadow 0.15s ease;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #38bdf8, #0ea5e9);
+  color: #0b1120;
+  box-shadow: 0 12px 25px rgba(56, 189, 248, 0.35);
+}
+
+.btn-primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 16px 32px rgba(56, 189, 248, 0.45);
+}
+
+.btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+  transform: none;
+  box-shadow: none;
+}
+
+/* Checkbox */
+
+.checkbox-row {
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+}
+
+.checkbox-row input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+}
+
+/* File drop zone */
+
+.file-drop-zone {
+  border-radius: 16px;
+  border: 1px dashed rgba(148, 163, 184, 0.6);
+  background: radial-gradient(circle at top left, #02081a, #020617 40%, #000 100%);
+  padding: 16px;
+  text-align: center;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background-color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.file-drop-zone:hover {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent-soft);
+}
+
+.file-drop-zone.drag-over {
+  border-color: var(--accent);
+  background: rgba(15, 23, 42, 0.95);
+  box-shadow: 0 0 0 1px var(--accent-strong);
+}
+
+.file-drop-text {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--text-muted);
+}
+
+.file-drop-highlight {
+  color: var(--accent);
+  text-decoration: underline;
+}
+
+.file-input-hidden {
+  display: none;
+}
+
+#selectedFileLabel {
+  min-height: 1.1em;
+}
+
+/* Hint text */
+
+.hint {
+  margin: 0;
+  font-size: 0.8rem;
+  color: var(--text-soft);
+}
+
+/* Log output */
+
+.log-output {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+    "Liberation Mono", "Courier New", monospace;
+  font-size: 0.8rem;
+  background: rgba(15, 23, 42, 0.9);
+  border-radius: 12px;
+  padding: 10px 12px;
+  min-height: 80px;
+  max-height: 260px;
+  overflow-y: auto;
+  border: 1px solid rgba(31, 41, 55, 0.9);
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+
+/* Responsive tweaks */
+
+@media (max-width: 720px) {
+  body {
+    padding: 16px 10px 28px;
+  }
+
+  .card {
+    padding: 16px 14px 14px;
+  }
+
+  .app-header h1 {
+    font-size: 1.4rem;
+  }
+}

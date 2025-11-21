@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Omniscope Workflow – Upload & Execute</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="/style.css" />
+  </head>
+  <body>
+    <div class="app-container">
+      <header class="app-header">
+        <h1>Omniscope Workflow – Upload &amp; Execute</h1>
+        <p class="app-subtitle">
+          Enter a project path, select a FILE parameter, upload a file, and run a lambda execution.
+        </p>
+      </header>
+
+      <!-- Project selection -->
+      <section class="card">
+        <h2 class="section-title">1. Project</h2>
+        <div class="form-row">
+          <label for="projectPathInput">Project path</label>
+          <input
+            id="projectPathInput"
+            type="text"
+            placeholder="e.g. My+Folder/Netflix+tiles.iox"
+          />
+        </div>
+        <div class="form-row form-row-actions">
+          <button id="loadProjectBtn" class="btn btn-primary">
+            Load project parameters
+          </button>
+        </div>
+        <p class="hint">
+          The project path should be relative to your Omniscope server root.
+        </p>
+      </section>
+
+      <!-- Execution setup -->
+      <section class="card">
+        <h2 class="section-title">2. Execution setup</h2>
+
+        <!-- File drop area -->
+        <div class="form-row">
+          <label for="fileInput">File to upload</label>
+          <div id="fileDropZone" class="file-drop-zone">
+            <p class="file-drop-text">
+              Drop a file here, or <span class="file-drop-highlight">click to browse</span>.
+            </p>
+            <input id="fileInput" type="file" class="file-input-hidden" />
+          </div>
+          <p id="selectedFileLabel" class="hint"></p>
+        </div>
+
+        <!-- FILE parameter selection -->
+        <div class="form-row">
+          <label for="paramSelect">Target FILE parameter</label>
+          <select id="paramSelect">
+            <option value="">Load a project to see FILE parameters…</option>
+          </select>
+          <p class="hint">
+            Only parameters of type <code>FILE</code> will be shown here.
+          </p>
+        </div>
+
+        <!-- Optional blocks input -->
+        <div class="form-row">
+          <label for="blocksInput">Blocks (optional)</label>
+          <input
+            id="blocksInput"
+            type="text"
+            placeholder="Comma-separated block names (leave empty for all)"
+          />
+          <p class="hint">
+            Leave blank to execute all blocks, or specify one or more block names.
+          </p>
+        </div>
+
+        <!-- Options -->
+        <div class="form-row checkbox-row">
+          <label>
+            <input
+              id="deleteExecutionCheckbox"
+              type="checkbox"
+              checked
+            />
+            Delete execution when finished
+          </label>
+        </div>
+
+        <!-- Execute -->
+        <div class="form-row form-row-actions">
+          <button id="uploadExecuteBtn" class="btn btn-primary">
+            Upload and execute
+          </button>
+        </div>
+      </section>
+
+      <!-- Log output -->
+      <section class="card">
+        <h2 class="section-title">3. Log</h2>
+        <div id="logOutput" class="log-output" aria-live="polite"></div>
+      </section>
+    </div>
+
+    <script type="module" src="/main.js"></script>
+  </body>
+</html>
