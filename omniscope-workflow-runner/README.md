@@ -110,7 +110,7 @@ No special configuration is needed in the browser.
     ├── style.css           # Styles, including the log panel
     ├── vite.config.js      # Dev proxy for the Omniscope Workflow API
     ├── package.json        # Dependencies and scripts
-    └── screenshot.png      # (optional) Example screenshot
+    └── screenshot.png      # Example screenshot
 
 
 
