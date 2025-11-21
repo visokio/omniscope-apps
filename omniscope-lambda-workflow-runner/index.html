@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Omniscope Lambda Execution Demo</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+
+<body>
+  <div class="container">
+    <h1>Omniscope Lambda Execution Demo</h1>
+
+    <!-- Project Loader -->
+    <section class="panel">
+      <h2>Project</h2>
+      <div class="field">
+        <label for="projectPath">Project path</label>
+        <div class="row">
+          <input
+            id="projectPath"
+            type="text"
+            placeholder="Customer+Satisfaction/Dashboard.iox"
+          />
+          <button id="loadProjectBtn">Load</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Parameters -->
+    <section class="panel">
+      <h2>Parameters</h2>
+      <div id="paramsContainer" class="param-container">
+        <!-- JS will insert parameter inputs here -->
+      </div>
+    </section>
+
+    <!-- Lambda options -->
+    <section class="panel">
+      <h2>Lambda Options</h2>
+
+      <div class="field">
+        <label for="blocksInput">Blocks to execute (comma-separated)</label>
+        <textarea
+          id="blocksInput"
+          placeholder="Leave empty to run all blocks"
+        ></textarea>
+      </div>
+
+      <div class="field field-inline">
+        <label class="checkbox-label">
+          <input id="deleteOnFinish" type="checkbox" />
+          Delete execution on finish
+        </label>
+      </div>
+
+      <div class="field">
+        <button id="executeBtn">Execute Lambda</button>
+      </div>
+    </section>
+
+    <!-- Logs -->
+    <section class="panel">
+      <h2>Logs</h2>
+      <div id="logOutput" class="log-output"></div>
+    </section>
+  </div>
+
+  <script src="main.js"></script>
+</body>
+</html>

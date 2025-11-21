@@ -1,4 +1,4 @@
-# Simple Table with Filters (Vite, Vanilla JS)
+# Simple Table with Filters
 
 Self-contained example that renders a table on the left with a right-hand filter panel. Selecting fields/filters updates the table immediately. Includes a Vite dev proxy to avoid CORS during local development.
 

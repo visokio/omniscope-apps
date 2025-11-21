@@ -1,4 +1,4 @@
-# 📘 **omniscope-workflow-runner**
+# 📘 **Omniscope Workflow Runner**
 
 A lightweight example application demonstrating how to interact with the
 **Omniscope Workflow REST API** using **Vite**, **vanilla JavaScript**,
