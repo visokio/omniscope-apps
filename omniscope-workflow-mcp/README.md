@@ -243,7 +243,7 @@ Replace `project_path` and `job_id` with real values. Similar payloads apply to 
 
 ---
 
-## Contributing / Development Notes
+## Development Notes
 
 - Source lives under `src/` with TypeScript strict mode (see `tsconfig.json`).
 - Build artifacts go to `dist/`; do not check them in.
