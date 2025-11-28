@@ -48,7 +48,7 @@ Create a `.env` file in the project root. Only the variables below are used by t
 Minimal `.env` example:
 
 ```dotenv
-OMNI_BASE_URL=https://demo.omniscope.me
+OMNI_BASE_URL=https://youserverdomain.com
 OMNI_BASIC_USERNAME=workflow-user
 OMNI_BASIC_PASSWORD=workflow-pass
 PORT=3000
